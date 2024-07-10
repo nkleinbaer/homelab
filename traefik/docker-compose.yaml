@@ -4,8 +4,11 @@ services:
   reverse-proxy:
     # The official v3 Traefik docker image
     image: traefik:v3.0
+    restart: unless-stopped
     # Enables the web UI and tells Traefik to listen to docker
-    command: --api.insecure=true --providers.docker
+    command: --api.insecure=true --providers.docker --log.level=INFO
+    networks:
+      - homelab-internal
     ports:
       # The HTTP port
       - "80:80"
@@ -14,3 +17,8 @@ services:
     volumes:
       # So that Traefik can listen to the Docker events
       - /var/run/docker.sock:/var/run/docker.sock
+
+
+networks:
+  homelab-internal:
+    name: homelab-internal 
