@@ -5,7 +5,6 @@ services:
     hostname: rpi-grafana
     labels:
       - "traefik.http.routers.grafana.rule=Host(`grafana.local`)"
-      - "traefik.docker.network=monitoring_internal"
     restart: unless-stopped
     user: "472"
     networks:
