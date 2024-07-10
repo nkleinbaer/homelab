@@ -1,37 +1,19 @@
 services:
-  goesrecv:
-    container_name: goestools-goesrecv
-    image: goestools
-    hostname: goesrecv
-    expose:
-       - 5004
-    devices:
-       - /dev/bus/usb/001/004:/dev/bus/usb/001/004 
-    volumes:
-       - ./goesrecv.conf:/opt/goesrecv.conf
-    command:
-       - 'goesrecv'
-       - '-v' 
-       - '-i' 
-       - '1' 
-       - '-c' 
-       - '/opt/goesrecv.conf' 
-
   goesproc:
     container_name: goestools-goesproc
     image: goestools
     volumes:
-       - /mnt/data/goes:/data
+      - /mnt/data/goes:/data
     command:
-       - 'goesproc'
-       - '-c'
-       - '/usr/share/goestools/goesproc-goesr.conf'
-       - '-m'
-       - 'packet' 
-       - '--subscribe' 
-       - 'tcp://goesrecv:5004'
-       - '--out' 
-       - '/data'
-    depends_on:
-       - goesrecv
+      - 'goesproc'
+      - '-c'
+      - '/usr/share/goestools/goesproc-goesr.conf'
+      - '-m'
+      - 'packet' 
+      - '--subscribe' 
+      - 'tcp://host.docker.internal:5004'
+      - '--out' 
+      - '/data'
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
