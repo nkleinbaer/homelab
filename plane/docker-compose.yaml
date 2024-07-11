@@ -62,6 +62,8 @@ services:
     image: ${DOCKERHUB_USER:-makeplane}/plane-space:${APP_RELEASE:-stable}
     networks:
       - internal
+    labels:
+      - "traefik.http.routers.plane-space.rule=Host(`plane.local`) && PathPrefix(`/spaces`)"
     platform: ${DOCKER_PLATFORM:-}
     pull_policy: ${PULL_POLICY:-always}
     restart: unless-stopped
@@ -78,6 +80,8 @@ services:
     image: ${DOCKERHUB_USER:-makeplane}/plane-admin:${APP_RELEASE:-stable}
     networks:
       - internal
+    labels:
+      - "traefik.http.routers.plane-admin.rule=Host(`plane.local`) && PathPrefix(`/god-mode`)"
     platform: ${DOCKER_PLATFORM:-}
     pull_policy: ${PULL_POLICY:-always}
     restart: unless-stopped
@@ -93,6 +97,8 @@ services:
     image: ${DOCKERHUB_USER:-makeplane}/plane-backend:${APP_RELEASE:-stable}
     networks:
       - internal
+    labels:
+      - "traefik.http.routers.plane-api.rule=Host(`plane.local`) && (PathPrefix(`/api`) || PathPrefix(`/auth`)"
     platform: ${DOCKER_PLATFORM:-}
     pull_policy: ${PULL_POLICY:-always}
     restart: unless-stopped
@@ -178,6 +184,8 @@ services:
     image: minio/minio:latest
     networks:
       - internal
+    labels:
+      - "traefik.http.routers.plane-minio.rule=(Host(`plane.local`) && PathPrefix(`/uploads`)) || Host(`plane-minio.local`))"
     pull_policy: if_not_present
     restart: unless-stopped
     command: server /export --console-address ":9090"
