@@ -4,10 +4,11 @@ services:
     image: goestools
     volumes:
       - /mnt/data/goes:/data
+      - ./goesproc-goesr.conf:/etc/goesproc-goesr.conf
     command:
       - 'goesproc'
       - '-c'
-      - '/usr/share/goestools/goesproc-goesr.conf'
+      - '/etc/goesproc-goesr.conf'
       - '-m'
       - 'packet' 
       - '--subscribe' 
