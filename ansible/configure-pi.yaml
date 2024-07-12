@@ -90,9 +90,11 @@
     - name: Blacklist DVB Driver
       become: true
       lineinfile:
-         path: '/etc/modprobe.d/blacklist-dvb_usb_rtl28xxu.conf'
-         line: 'blacklist dvb_usb_rtl28xxu'
+        create: true
+        path: '/etc/modprobe.d/blacklist-dvb_usb_rtl28xxu.conf'
+        line: 'blacklist dvb_usb_rtl28xxu'
     - name: Reboot
+      become: true
       ansible.builtin.reboot:
     - name: Bring up stack
-      ansible.builtin.command: docker compose -f /home/nick/homelab/plane/docker-compose.yaml up -d
+      ansible.builtin.command: docker compose -f /home/nick/homelab/goestools/docker-compose.yaml up -d
