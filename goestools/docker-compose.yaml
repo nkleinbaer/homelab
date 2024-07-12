@@ -1,7 +1,7 @@
 services:
   goesproc:
     container_name: goestools-goesproc
-    image: goestools
+    image: nickkb/goestools
     volumes:
       - /mnt/data/goes:/data
       - ./goesproc-goesr.conf:/etc/goesproc-goesr.conf
