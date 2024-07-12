@@ -82,3 +82,17 @@
     - name: Bring up stack
       ansible.builtin.command: docker compose -f /home/nick/homelab/plane/docker-compose.yaml up -d
 
+- name: Set up goestools
+  hosts: homelab
+  tags:
+    - goestools
+  tasks:
+    - name: Blacklist DVB Driver
+      become: true
+      lineinfile:
+         path: '/etc/modprobe.d/blacklist-dvb_usb_rtl28xxu.conf'
+         line: 'blacklist dvb_usb_rtl28xxu'
+    - name: Reboot
+      ansible.builtin.reboot:
+    - name: Bring up stack
+      ansible.builtin.command: docker compose -f /home/nick/homelab/plane/docker-compose.yaml up -d
