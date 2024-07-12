@@ -1,6 +1,15 @@
 FROM alpine  AS build
 
-RUN apk add --no-cache opencv-dev zlib cmake build-base && rm -rf /var/cache/apk/*
+RUN apk add --no-cache libusb-dev proj-dev opencv-dev zlib cmake build-base && rm -rf /var/cache/apk/*
+
+
+COPY ./librtlsdr /librtlsdr
+WORKDIR /librtlsdr/build 
+
+RUN cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr -DINSTALL_UDEV_RULES=ON .. && \
+    make -j2 install
+#    cp ../rtl-sdr.rules /etc/udev/rules.d/ && \
+#    ldconfig
 
 COPY ./goestools /goestools
 WORKDIR /goestools/build
@@ -8,6 +17,8 @@ WORKDIR /goestools/build
 RUN cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr .. && make -j2 install 
 
 FROM alpine 
+
+COPY --from=build /usr/lib/libusb-1.0.so.0 /usr/lib/librtlsdr.so.0 /usr/lib
 
 COPY --from=build /usr/lib/libXau.so.6 /usr/lib/libXdmcp.so.6 /usr/lib/libunistring.so.5 /usr/lib/libunistring.so.5 \
 		  /usr/lib/libbrotlicommon.so.1 /usr/lib/libglapi.so.0 /usr/lib/libdrm.so.2 /usr/lib/libX11.so.6 /usr/lib/libxcb-glx.so.0 \
@@ -20,6 +31,7 @@ COPY --from=build /usr/lib/libXau.so.6 /usr/lib/libXdmcp.so.6 /usr/lib/libunistr
 		  /usr/lib/libwebp.so.7 /usr/lib/libpng16.so.16 /usr/lib/libtiff.so.6 /usr/lib/libopenjp2.so.7 /usr/lib/libOpenEXR-3_1.so.30 /usr/lib/libsqlite3.so.0 \
 		  /usr/lib/libcurl.so.4 /usr/lib/libtiff.so.6 /usr/lib/libopencv* /usr/lib/libproj.so.25 /usr/lib/libstdc++.so.6 /usr/lib/libgcc_s.so.1 \
       /usr/lib 
+COPY --from=build /usr/share/proj /usr/share/proj
 
 COPY --from=build /usr/share/goestools /usr/share/goestools
 COPY --from=build /usr/bin/goes* /usr/bin/
