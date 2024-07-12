@@ -98,7 +98,7 @@ services:
     networks:
       - internal
     labels:
-      - "traefik.http.routers.plane-api.rule=Host(`plane.local`) && (PathPrefix(`/api`) || PathPrefix(`/auth`)"
+      - "traefik.http.routers.plane-api.rule=Host(`plane.local`) && (PathPrefix(`/api`) || PathPrefix(`/auth`))"
     platform: ${DOCKER_PLATFORM:-}
     pull_policy: ${PULL_POLICY:-always}
     restart: unless-stopped
@@ -185,7 +185,7 @@ services:
     networks:
       - internal
     labels:
-      - "traefik.http.routers.plane-minio.rule=(Host(`plane.local`) && PathPrefix(`/uploads`)) || Host(`plane-minio.local`))"
+      - "traefik.http.routers.plane-minio.rule=(Host(`plane.local`) && PathPrefix(`/uploads`)) || Host(`plane-minio.local`)"
     pull_policy: if_not_present
     restart: unless-stopped
     command: server /export --console-address ":9090"
