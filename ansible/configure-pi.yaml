@@ -1,0 +1,84 @@
+- name: Install and configure Docker
+  hosts: homelab
+  tags:
+    - docker
+  vars:
+    docker_users:
+      - nick
+  roles:
+    - geerlingguy.docker
+  become: true
+
+- name: Configure storage
+  hosts: homelab
+  tags:
+    - storage
+  become: true
+  tasks:
+    - name: Create mountpoint
+      ansible.builtin.command: mkdir -p /mnt/data
+    - name: Update fstab
+      lineinfile:
+         path: '/etc/fstab'
+         line: "UUID=4c8d87c7-ab3b-4d2c-be46-aebfda67f3ca	/mnt/data	ext4	defaults,noatime,nofail	0	2"
+    - name: Mount 
+      ansible.builtin.command: mount -a 
+    - name: Reload systemd 
+      ansible.builtin.command: systemctl daemon-reload
+
+- name: Pull IaC
+  hosts: homelab
+  tags:
+    iac
+  tasks:
+    - name: Delete existing repo
+      become: true
+      ansible.builtin.file:
+        path: /home/nick/homelab
+        state: absent
+    - name: Pull repo
+      ansible.builtin.git:
+        repo: https://github.com/nkleinbaer/homelab
+        dest: ~/homelab
+  
+- name: Configure mDNS
+  hosts: homelab
+  tags:
+    - mdns
+  tasks:
+    - name: Install Avahi utils
+      become: true
+      ansible.builtin.package:
+        name: avahi-utils
+        state: present
+    - name: Configure mDNS publishing service
+      become: true
+      ansible.builtin.script: ../mdns/configure-mdns.sh
+
+- name: Set up traefik
+  hosts: homelab
+  tags:
+    - traefik
+  tasks:
+    - name: Bring up stack
+      ansible.builtin.command: docker compose -f /home/nick/homelab/traefik/docker-compose.yaml up -d
+
+- name: Set up monitoring
+  hosts: homelab
+  tags:
+    - monitoring
+  tasks:
+    - name: Set up data dirs
+      ansible.builtin.script: ../monitoring/configure-monitoring.sh
+    - name: Bring up stack
+      ansible.builtin.command: docker compose -f /home/nick/homelab/monitoring/docker-compose.yml up -d
+
+
+- name: Set up plane
+  hosts: homelab
+  tags:
+    - plane
+  tasks:
+    - name: Bring up stack
+      ansible.builtin.command: docker compose -f /home/nick/homelab/plane/docker-compose.yaml up -d
+
