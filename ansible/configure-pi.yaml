@@ -93,8 +93,59 @@
         create: true
         path: '/etc/modprobe.d/blacklist-dvb_usb_rtl28xxu.conf'
         line: 'blacklist dvb_usb_rtl28xxu'
+      register: blacklist
     - name: Reboot
       become: true
+      when: blacklist.changed
       ansible.builtin.reboot:
     - name: Bring up stack
       ansible.builtin.command: docker compose -f /home/nick/homelab/goestools/docker-compose.yaml up -d
+
+- name: Setup rclone
+  hosts: homelab
+  tags:
+    - rclone
+  vars_files:
+    - secrets.yaml
+  tasks:
+    - name: Check for rclone command
+      shell: which rclone >/dev/null 2>&1
+      register: installed
+      ignore_errors: yes
+    - block:
+        - name: Download rclone installer
+          get_url:
+            url: https://rclone.org/install.sh
+            dest: /tmp/install-rclone.sh
+            mode: 777
+            force: true
+        - name: Insall rclone
+          become: true
+          shell: /tmp/install-rclone.sh
+        - name: Remove rclone installer
+          file:
+            path: /tmp/install-rclone.sh
+            state: absent
+      when: installed.rc != 0
+    - name: Upload rclone config
+      ansible.builtin.copy:
+        src: ../goestools/rclone.conf
+        dest: /home/nick/.config/rclone/rclone.conf
+    - name: Add secrets to rclone config
+      no_log: true
+      community.general.ini_file:
+        path: /home/nick/.config/rclone/rclone.conf
+        section: pixeltraphouse
+        option: '{{ item.key }}'
+        value: '{{ item.value}}'
+      loop: "{{ lookup('dict', data) }}"
+    - name: Install rsyslog
+      package:
+        name: rsyslog 
+        state: present
+    - name: Setup cron job
+      become: true
+      ansible.builtin.cron:
+        name: "Sync goes data to s3"
+        minute: "*/5"
+        job: "rclone move -vvv --delete-empty-src-dirs --config /home/nick/.config/rclone/rclone.conf /mnt/data/goes pixeltraphouse:pixeltraphouse/goes"
