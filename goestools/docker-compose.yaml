@@ -6,7 +6,7 @@ services:
     expose:
        - 5004
     devices:
-       - /dev/bus/usb/001/005:/dev/bus/usb/001/005
+       - ${RTLSDR_DEV}:${RTLSDR_DEV}
     volumes:
        - ./goesrecv.conf:/opt/goesrecv.conf
     command:
