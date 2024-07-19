@@ -2,3 +2,4 @@
 *.envrc
 *passwd*
 *secrets*
+*.aider*
