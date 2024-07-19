@@ -1,0 +1,93 @@
+- name: Install sudo 
+  hosts: thinkpad
+  vars_files:
+    - ../secrets.yaml
+  become: yes
+  become_method: su
+  tasks:
+    - name: Install sudo
+      package:
+        name: sudo
+        state: present 
+    - name: Make sure we have a 'wheel' group
+      group:
+        name: wheel
+        state: present
+    - name: Allow 'wheel' group to have passwordless sudo
+      lineinfile:
+        dest: /etc/sudoers
+        state: present
+        regexp: '^%wheel'
+        line: '%wheel ALL=(ALL) NOPASSWD: ALL'
+        validate: '/usr/sbin/visudo -cf %s'
+    - name: Add sudoers users to wheel group
+      user:
+        name: nick
+        groups: wheel
+        append: yes
+        state: present
+
+- name: Install dev tools 
+  hosts: thinkpad
+  user: nick
+  become: true
+  tags:
+    - devtools 
+  tasks:
+    - name: Install make
+      package:
+        name: make
+        state: present
+    - name: Install curl
+      package:
+        name: curl
+        state: present
+    - name: Install jq
+      package:
+        name: jq
+        state: present
+
+- name: Disable suspend
+  hosts: thinkpad
+  user: nick
+  become: true
+  tags:
+    - disable-suspend
+  tasks:
+    - name: Update HandleLidSwitch 
+      lineinfile:
+        dest: /etc/systemd/logind.conf
+        regex: "^#?HandleLidSwitch="
+        line: "HandleLidSwitch=ignore"
+    - name: Update HandleLidSwitchExternalPower 
+      lineinfile:
+        dest: /etc/systemd/logind.conf
+        regex: "^#?HandleLidSwitchExternalPower="
+        line: "HandleLidSwitchExternalPower=ignore"
+
+- name: Install and configure Docker
+  hosts: thinkpad
+  user: nick
+  tags:
+    - docker
+  vars:
+    docker_users:
+      - nick
+  roles:
+    - geerlingguy.docker
+  become: true
+
+- name: Pull IaC
+  hosts: thinkpad
+  tags:
+    iac
+  tasks:
+    - name: Delete existing repo
+      become: true
+      ansible.builtin.file:
+        path: /home/nick/homelab
+        state: absent
+    - name: Pull repo
+      ansible.builtin.git:
+        repo: https://github.com/nkleinbaer/homelab
+        dest: ~/homelab
