@@ -4,11 +4,18 @@ services:
     image: grafana/grafana:latest
     hostname: rpi-grafana
     labels:
-      - "traefik.http.routers.grafana.rule=Host(`grafana.local`)"
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-service-net"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.nkleinbaer.com`)"
+      - "traefik.http.services.grafana-monitoring.loadbalancer.server.port=3000"
+      - "traefik.http.routers.grafana.middlewares=traefikAuth@file, secHeaders@file"
+      - "traefik.http.routers.grafana.tls.certresolver=dnschallenge"
+      - "traefik.http.routers.grafana.entrypoints=web-secure"
     restart: unless-stopped
     user: "472"
     networks:
-      - internal
+      - traefik-service-net
+      - monitoring-consumer-net
     expose:
       - 3000
     env_file:
@@ -27,7 +34,7 @@ services:
     restart: unless-stopped
     privileged: true
     networks:
-      - internal
+      - monitoring-producer-net
     expose:
       - 8080
     command:
@@ -50,7 +57,7 @@ services:
     hostname: rpi-exporter
     restart: unless-stopped
     networks:
-      - internal
+      - monitoring-producer-net
     expose:
       - 9100
     command:
@@ -71,14 +78,13 @@ services:
     hostname: rpi-prometheus
     restart: unless-stopped
     user: "nobody"
+    networks:
+      - monitoring-producer-net
+      - monitoring-consumer-net
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
       - '--storage.tsdb.retention.time=1y'
-      # /!\ Uncomment the following line to set a size limit for the Prometheus database /!\
-#      - '--storage.tsdb.retention.size=10GB'
-    networks:
-      - internal
     expose:
       - 9090
     volumes:
@@ -88,11 +94,11 @@ services:
     depends_on:
       - cadvisor
       - node-exporter
-    links:
-      - cadvisor:cadvisor
-      - node-exporter:node-exporter
 
 networks:
-  internal:
-    name: homelab-internal
+  traefik-service-net:
     external: true
+  monitoring-producer-net:
+    internal: true
+  monitoring-consumer-net:
+    internal: true

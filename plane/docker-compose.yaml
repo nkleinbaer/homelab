@@ -44,9 +44,17 @@ services:
     <<: *app-env
     image: ${DOCKERHUB_USER:-makeplane}/plane-frontend:${APP_RELEASE:-stable}
     networks:
-      - internal
+      - traefik-service-net
+      - plane-internal-net
     labels:
-      - "traefik.http.routers.plane.rule=Host(`plane.local`)"
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-service-net"
+      - "traefik.http.services.web-plane.loadbalancer.server.port=3000"
+      - "traefik.http.routers.plane.rule=Host(`plane.nkleinbaer.com`)"
+      - "traefik.http.routers.plane.middlewares=traefikAuth@file, secHeaders@file"
+      - "traefik.http.routers.plane.tls.certresolver=dnschallenge"
+      - "traefik.http.routers.plane.entrypoints=web-secure"
+      - "traefik.http.routers.plane.tls.domains[0].main=plane.nkleinbaer.com"
     platform: ${DOCKER_PLATFORM:-}
     pull_policy: ${PULL_POLICY:-always}
     restart: unless-stopped
@@ -61,9 +69,17 @@ services:
     <<: *app-env
     image: ${DOCKERHUB_USER:-makeplane}/plane-space:${APP_RELEASE:-stable}
     networks:
-      - internal
+      - traefik-service-net
+      - plane-internal-net
     labels:
-      - "traefik.http.routers.plane-space.rule=Host(`plane.local`) && PathPrefix(`/spaces`)"
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-service-net"
+      - "traefik.http.services.space-plane.loadbalancer.server.port=3000"
+      - "traefik.http.routers.plane-space.rule=Host(`plane.nkleinbaer.com`) && PathPrefix(`/spaces`)"
+      - "traefik.http.routers.plane-space.middlewares=traefikAuth@file, secHeaders@file"
+      - "traefik.http.routers.plane-space.tls.certresolver=dnschallenge"
+      - "traefik.http.routers.plane-space.entrypoints=web-secure"
+      - "traefik.http.routers.plane-space.tls.domains[0].main=plane.nkleinbaer.com"
     platform: ${DOCKER_PLATFORM:-}
     pull_policy: ${PULL_POLICY:-always}
     restart: unless-stopped
@@ -79,9 +95,16 @@ services:
     <<: *app-env
     image: ${DOCKERHUB_USER:-makeplane}/plane-admin:${APP_RELEASE:-stable}
     networks:
-      - internal
+      - traefik-service-net
     labels:
-      - "traefik.http.routers.plane-admin.rule=Host(`plane.local`) && PathPrefix(`/god-mode`)"
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-service-net"
+      - "traefik.http.services.admin-plane.loadbalancer.server.port=3000"
+      - "traefik.http.routers.plane-admin.rule=Host(`plane.nkleinbaer.com`) && PathPrefix(`/god-mode`)"
+      - "traefik.http.routers.plane-admin.middlewares=traefikAuth@file, secHeaders@file"
+      - "traefik.http.routers.plane-admin.tls.certresolver=dnschallenge"
+      - "traefik.http.routers.plane-admin.entrypoints=web-secure"
+      - "traefik.http.routers.plane-admin.tls.domains[0].main=plane.nkleinbaer.com"
     platform: ${DOCKER_PLATFORM:-}
     pull_policy: ${PULL_POLICY:-always}
     restart: unless-stopped
@@ -96,9 +119,17 @@ services:
     <<: *app-env
     image: ${DOCKERHUB_USER:-makeplane}/plane-backend:${APP_RELEASE:-stable}
     networks:
-      - internal
+      - traefik-service-net
+      - plane-internal-net
     labels:
-      - "traefik.http.routers.plane-api.rule=Host(`plane.local`) && (PathPrefix(`/api`) || PathPrefix(`/auth`))"
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-service-net"
+      - "traefik.http.services.api-plane.loadbalancer.server.port=8000"
+      - "traefik.http.routers.plane-api.rule=Host(`plane.nkleinbaer.com`) && (PathPrefix(`/api`) || PathPrefix(`/auth`))"
+      - "traefik.http.routers.plane-api.middlewares=traefikAuth@file, secHeaders@file"
+      - "traefik.http.routers.plane-api.tls.certresolver=dnschallenge"
+      - "traefik.http.routers.plane-api.entrypoints=web-secure"
+      - "traefik.http.routers.plane-api.tls.domains[0].main=plane.nkleinbaer.com"
     platform: ${DOCKER_PLATFORM:-}
     pull_policy: ${PULL_POLICY:-always}
     restart: unless-stopped
@@ -115,7 +146,7 @@ services:
     <<: *app-env
     image: ${DOCKERHUB_USER:-makeplane}/plane-backend:${APP_RELEASE:-stable}
     networks:
-      - internal
+      - plane-internal-net
     platform: ${DOCKER_PLATFORM:-}
     pull_policy: ${PULL_POLICY:-always}
     restart: unless-stopped
@@ -131,7 +162,7 @@ services:
     <<: *app-env
     image: ${DOCKERHUB_USER:-makeplane}/plane-backend:${APP_RELEASE:-stable}
     networks:
-      - internal
+      - plane-internal-net
     platform: ${DOCKER_PLATFORM:-}
     pull_policy: ${PULL_POLICY:-always}
     restart: unless-stopped
@@ -147,7 +178,7 @@ services:
     <<: *app-env
     image: ${DOCKERHUB_USER:-makeplane}/plane-backend:${APP_RELEASE:-stable}
     networks:
-      - internal
+      - plane-internal-net
     platform: ${DOCKER_PLATFORM:-}
     pull_policy: ${PULL_POLICY:-always}
     restart: "no"
@@ -162,7 +193,7 @@ services:
     <<: *app-env
     image: postgres:15.5-alpine
     networks:
-      - internal
+      - plane-internal-net
     pull_policy: if_not_present
     restart: unless-stopped
     command: postgres -c 'max_connections=1000'
@@ -173,7 +204,7 @@ services:
     <<: *app-env
     image: valkey/valkey:7.2.5-alpine
     networks:
-      - internal
+      - plane-internal-net
     pull_policy: if_not_present
     restart: unless-stopped
     volumes:
@@ -183,9 +214,17 @@ services:
     <<: *app-env
     image: minio/minio:latest
     networks:
-      - internal
+      - traefik-service-net
+      - plane-internal-net
     labels:
-      - "traefik.http.routers.plane-minio.rule=(Host(`plane.local`) && PathPrefix(`/uploads`)) || Host(`plane-minio.local`)"
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-service-net"
+      - "traefik.http.services.plane-minio-plane.loadbalancer.server.port=9000"
+      - "traefik.http.routers.plane-minio.rule=(Host(`plane.nkleinbaer.com`) && PathPrefix(`/uploads`)) || Host(`plane-minio.local`)"
+      - "traefik.http.routers.plane-minio.middlewares=traefikAuth@file, secHeaders@file"
+      - "traefik.http.routers.plane-minio.tls.certresolver=dnschallenge"
+      - "traefik.http.routers.plane-minio.entrypoints=web-secure"
+      - "traefik.http.routers.plane-minio.tls.domains[0].main=plane.nkleinbaer.com"
     pull_policy: if_not_present
     restart: unless-stopped
     command: server /export --console-address ":9090"
@@ -193,6 +232,8 @@ services:
       - /mnt/data/plane/uploads:/export
 
 networks:
-  internal:
-    name: homelab-internal
+  traefik-service-net:
     external: true
+  plane-internal-net:
+    name: z-plane-internal-net
+    internal: true
